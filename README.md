@@ -123,3 +123,23 @@ All these steps are explained in detail on [AIAB documentation](https://docs.sd-
     below curl command will launch a profile in gNBSim
    
     $ curl -i -X POST 127.0.0.1:8080/gnbsim/v1/executeProfile -H 'Content-Type: application/json' -d '{"profileType":"nwreqpdusessrelease","profileName":"profile8","enable":true,"gnbName":"gnb1","startImsi":"208930100007497","ueCount":1,"opc":"981d464c7c52eb6e5036234984ad0bcf","key":"5122250214c33e723a5dd523fc145fc0","sequenceNumber":"16f3b3f70fc2","defaultAs":"192.168.250.1","plmnId":{"mcc":"208","mnc":"93"}}'
+
+
+```mermaid
+sequenceDiagram
+    participant User_Browser
+    participant gnbsim
+    User_Browser->>gnbsim: handle1
+    Note right of gnbsim : handle2
+    gnbsim->>User_Browser: handle3
+```
+
+```mermaid
+flowchart LR
+    Start --> Stop
+```
+
+```mermaid
+flowchart TB
+    Start --> Stop
+```
