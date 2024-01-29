@@ -33,6 +33,7 @@ type PduSession struct {
 	TxDataPktCount   int
 	RxDataPktCount   int
 	LastDataPktRecvd bool
+    ExtData          bool 
 	// Inidicates that a Go routine already exists for this PDU Session
 	Launched bool
 	/* uplink packets are written to gNB UE user plane context on this channel */

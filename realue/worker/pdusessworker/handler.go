@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"time"
+    "os/exec"
 
 	"github.com/omec-project/gnbsim/common"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
@@ -16,6 +17,12 @@ import (
 
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
+	"log"
+    "github.com/songgao/packets/ethernet"
+	"github.com/songgao/water"
+"github.com/jamescun/tuntap"
+	"encoding/binary"
+
 )
 
 const (
@@ -131,8 +138,12 @@ func HandleIcmpMessage(pduSess *realuectx.PduSession,
 func HandleDlMessage(pduSess *realuectx.PduSession,
 	msg common.InterfaceMessage) (err error) {
 
-	pduSess.Log.Traceln("Handling DL user data packet from gNb")
+    if pduSess.ExtData == true {
+        // write on interface 
+        return
+    }
 
+	pduSess.Log.Traceln("Handling DL user data packet from gNb")
 	if msg.GetEventType() == common.LAST_DATA_PKT_EVENT {
 		pduSess.Log.Debugln("Received last downlink data packet")
 		pduSess.LastDataPktRecvd = true
@@ -164,8 +175,15 @@ func HandleDlMessage(pduSess *realuectx.PduSession,
 	return nil
 }
 
+// entry point from app 
 func HandleDataPktGenRequestEvent(pduSess *realuectx.PduSession,
 	intfcMsg common.InterfaceMessage) (err error) {
+    pduSess.ExtData = true
+    // set pduSess.interDataMode = true/false
+    if pduSess.ExtData == true {
+        createTun(pduSess.PduAddress)
+        return
+    }
 	cmd := intfcMsg.(*common.UeMessage)
 	pduSess.ReqDataPktCount = cmd.UserDataPktCount
 	pduSess.ReqDataPktInt = cmd.UserDataPktInterval
@@ -231,4 +249,63 @@ func HandleQuitEvent(pduSess *realuectx.PduSession,
 	pduSess.Log.Infoln("Pdu Session terminated")
 
 	return nil
+}
+
+
+func createTun( addr net.IP) {
+	config := water.Config{
+		DeviceType: water.TAP,
+	}
+	config.Name = "ue_0"
+
+	ifce, err := water.New(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+    arg0 := "ip"
+    arg1 := "addr"
+    arg2 := "add"
+    arg3 := addr.String()
+    arg33 := arg3 + "/24"
+    arg4 := "dev"
+    arg5 := "ue_0"
+
+    cmd := exec.Command(arg0, arg1, arg2, arg33, arg4, arg5)
+    _, err = cmd.Output()
+
+    fmt.Println("Command1 ", cmd)
+    if err != nil {
+        fmt.Println(err.Error())
+        return
+    }
+
+    arg0 = "ip"
+    arg1 = "link"
+    arg2 = "set"
+    arg3 = "dev"
+    arg4 = "ue_0"
+    arg5 = "up"
+
+    cmd = exec.Command(arg0, arg1, arg2, arg3, arg4, arg5)
+    _, err = cmd.Output()
+
+    fmt.Println("Command2 ", cmd)
+    if err != nil {
+        fmt.Println(err.Error())
+        return
+    }
+
+	var frame ethernet.Frame
+	for {
+		frame.Resize(1500)
+		n, err := ifce.Read([]byte(frame))
+		if err != nil {
+			log.Fatal(err)
+		}
+		frame = frame[:n]
+		log.Printf("Dst: %s\n", frame.Destination())
+		log.Printf("Src: %s\n", frame.Source())
+		log.Printf("Ethertype: % x\n", frame.Ethertype())
+		log.Printf("Payload: % x\n", frame.Payload())
+	}
 }
