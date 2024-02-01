@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+
 package common
 
 import (
@@ -58,6 +59,9 @@ type UuMessage struct {
 	// channel that a src entity can optionally send to the target entity.
 	// Target entity will use this channel to write to the src entity
 	CommChan chan InterfaceMessage
+
+	//meta data
+	Tmsi string
 }
 
 // ProfileMessage is used to carry information between the Profile and SimUe

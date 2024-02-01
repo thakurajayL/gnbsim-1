@@ -127,7 +127,7 @@ func HandleRegCompleteEvent(ue *realuectx.RealUe,
 
 	_, ue.Guti = nasConvert.GutiToString(guti)
 
-	ue.Log.Traceln("Generating Registration Complete Message")
+	ue.Log.Traceln("Generating Registration Complete Message ")
 	nasPdu := nasTestpacket.GetRegistrationComplete(nil)
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
@@ -430,6 +430,14 @@ func HandleServiceRequestEvent(ue *realuectx.RealUe,
 	}
 
 	m := formUuMessage(common.SERVICE_REQUEST_EVENT, nasPdu)
+	var tmsi string
+	if len(ue.Guti) == 19 {
+		tmsi = ue.Guti[5:]
+	} else {
+		tmsi = ue.Guti[6:]
+	}
+
+	m.Tmsi = tmsi
 	SendToSimUe(ue, m)
 	return nil
 }
